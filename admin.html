@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+
+    <meta charset="UTF-8">
+    <title>Sistema Intealigente de Logística</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</head>
+
+<body>
+    <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+        <button onclick="sairSistema()" style="background-color: #e74c3c;">🚪 Sair (Logout)</button>
+        <button onclick="window.location.href='motorista.html'" style="background-color: #f39c12;">🚚 Tela do Motorista</button>
+    </div>
+
+<section class="dashboard">
+
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2>📊 Painel do Dia</h2>
+        
+        <div style="background: white; padding: 10px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <strong>Filtro de Relatório:</strong>
+            <input type="date" id="data-inicio" style="display: inline-block; width: auto; padding: 5px; margin: 0 5px;" title="Data Inicial">
+            <span>até</span>
+            <input type="date" id="data-fim" style="display: inline-block; width: auto; padding: 5px; margin: 0 5px;" title="Data Final">
+            <button onclick="carregarDashboard()" style="padding: 5px 10px; margin: 0;">Filtrar</button>
+        </div>
+    </div>
+
+    <div class="cards">
+
+        <div class="card">
+            <h3>Pedidos</h3>
+            <p id="pedidos">0</p>
+        </div>
+
+        <div class="card">
+            <h3>Total Vendido</h3>
+            <p id="vendas">0</p>
+        </div>
+
+        <div class="card">
+            <h3>Lucro</h3>
+            <p id="lucro">0</p>
+        </div>
+
+    </div>
+
+</section>
+
+<section>
+
+    <h2>📦 Produção</h2>
+
+    <table>
+
+        <thead>
+            <tr>
+                <th>Produto</th>
+                <th>Quantidade</th>
+            </tr>
+        </thead>
+
+        <tbody id="producao"></tbody>
+
+    </table>
+
+</section>
+
+<section>
+
+    <h2>🚚 Entregas</h2>
+
+    <table>
+
+        <thead>
+            <tr>
+                <th>Cliente</th>
+                <th>Produto</th>
+                <th>Quantidade</th>
+                <th>Rota</th>
+                <th>Endereço</th>
+                <th>Status</th>
+                <th>Lucro</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+
+        <tbody id="tabela"></tbody>
+
+    </table>
+
+</section>
+
+<section>
+
+    <h2>📍 Mapa das Entregas</h2>
+
+    <div id="map"></div>
+
+</section>
+
+<section>
+
+    <h2>📉 Diário de Bordo (Logs do Sistema)</h2>
+    <p>Acompanhe em tempo real tudo que acontece no sistema de logística.</p>
+
+    <div id="log-container" class="log-box">
+        <!-- Logs serão inseridos aqui pelo JS -->
+    </div>
+
+</section>
+
+<section>
+
+    <h2>📈 Previsão de Produção</h2>
+
+    <p id="previsao"></p>
+
+</section>
+
+<script src="script.js"></script>
+</body>
+</html>

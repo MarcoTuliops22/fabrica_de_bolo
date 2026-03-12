@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+
+    <meta charset="UTF-8">
+    <title>Sistema Inteligente de Logística</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+</head>
+
+<body>
+    <div style="display:flex; justify-content:space-between; margin-bottom: 20px;">
+        <button onclick="irAdmin()">🔐 Acesso ADM</button>
+        <button onclick="irMotorista()" style="background-color: #f39c12;">🚚 Acesso Motorista</button>
+    </div>
+
+    <header>
+        <h1>🥖 Sistema Inteligente de Logística</h1>
+        <p>Controle de pedidos, produção e entregas</p>
+    </header>
+
+    <section class="formulario">
+
+        <h2>Registrar Pedido</h2>
+
+        <input id="cliente" placeholder="Cliente">
+
+        <input id="produto" placeholder="Produto">
+
+        <div class="produtos">
+            <p>Selecionar Produto:</p>
+
+            <button onclick="selecionarProduto('Pão Francês')">Pão Francês</button>
+            <button onclick="selecionarProduto('Pão Doce')">Pão Doce</button>
+            <button onclick="selecionarProduto('Pão de Forma')">Pão de Forma</button>
+            <button onclick="selecionarProduto('Bolo')">Bolo</button>
+
+        </div>
+
+        <input id="quantidade" type="number" placeholder="Quantidade">
+
+        <input id="rota" placeholder="Rota">
+
+        <input id="custo" type="number" placeholder="Custo entrega">
+
+        <input id="valor" type="number" placeholder="Valor venda">
+
+        <input id="endereco" placeholder="Endereço de Entrega (Ex: Rua XV, Curitiba)">
+
+        <button onclick="registrarPedido()">Registrar</button>
+        <p id="codigo-gerado-display" style="text-align:center; color:#27ae60; margin-top:10px;"></p>
+
+    </section>
+
+    <!-- SEÇÃO DO CLIENTE PARA ACOMPANHAR O PEDIDO -->
+    <section class="formulario" style="margin-top: 20px;">
+        <h2>🔍 Acompanhar Meu Pedido</h2>
+        <p>Digite o código de 4 dígitos que você recebeu para rastrear a entrega.</p>
+        <input id="codigo-rastreio" placeholder="Ex: 1234" maxlength="4">
+        <button onclick="rastrearPedidoCliente()" style="background-color: #3498db;">Rastrear</button>
+        <div id="resultado-rastreio"></div>
+    </section>
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>

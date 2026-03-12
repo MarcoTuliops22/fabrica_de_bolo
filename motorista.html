@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Logística - Portal do Motorista</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Folha do leaflet apenas preventivamente, mas o maps abre externo para navegação GPS -->
+    <script>
+        if (sessionStorage.getItem('motoAuth') !== 'true' && sessionStorage.getItem('adminAuth') !== 'true') {
+            alert('Acesso bloqueado! Efetue login como motorista na página inicial.');
+            window.location.replace('index.html');
+        }
+    </script>
+</head>
+
+<body>
+
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+        <button onclick="sairSistema()" style="background-color: #e74c3c;">🚪 Sair (Logout)</button>
+    </div>
+    
+    <header>
+        <h1>🚚 Portal do Motorista</h1>
+        <p>Acompanhe suas rotas e confirme as entregas em tempo real.</p>
+    </header>
+
+    <section class="dashboard">
+        <h2>📍 Minhas Entregas Pendentes</h2>
+        <p>Abaixo estão os pedidos aguardando despacho. Vá até o local de entrega e peça o código ao cliente para finalizar.</p>
+        
+        <div id="lista-pendentes" class="cards-motorista" style="display:flex; flex-direction:column; gap: 15px;">
+            <!-- Preenchido pelo JS -->
+        </div>
+    </section>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
