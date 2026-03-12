@@ -52,7 +52,6 @@ function irAdmin() {
 }
 
 function irMotorista() {
-    sessionStorage.setItem("motoAuth", "true");
     window.location.href = "motorista.html";
 }
 
