@@ -7,6 +7,18 @@
     <link rel="stylesheet" href="style.css">
     <!-- Folha do leaflet apenas preventivamente, mas o maps abre externo para navegação GPS -->
 
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3498db">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('ServiceWorker registrado:', reg.scope))
+                    .catch(err => console.log('Falha no registro do ServiceWorker:', err));
+            });
+        }
+    </script>
 </head>
 
 <body>
