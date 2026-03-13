@@ -1,4 +1,4 @@
-const CACHE_NAME = 'logistica-app-v1';
+const CACHE_NAME = 'logistica-app-v2';
 const urlsToCache = [
   './',
   './index.html',
@@ -9,6 +9,7 @@ const urlsToCache = [
   './script.js',
   './manifest.json',
   './logo.png',
+  './bg.png',
   './icon-512x512.png',
   'https://unpkg.com/leaflet/dist/leaflet.css',
   'https://unpkg.com/leaflet/dist/leaflet.js'

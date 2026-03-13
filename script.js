@@ -47,7 +47,6 @@ function renderizarLogs() {
 
 // ========== AUTENTICAÇÃO E PERFIS ==========
 const usuariosPadrao = [
-    { usuario: 'admin', senha: '123', tipo: 'admin' },
     { usuario: 'motorista', senha: '123', tipo: 'motorista' }
 ];
 let usuarios = JSON.parse(localStorage.getItem('usuarios')) || usuariosPadrao;
