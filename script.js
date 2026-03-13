@@ -111,7 +111,45 @@ function sairSistema() {
     sessionStorage.removeItem("motoAuth");
     sessionStorage.removeItem("clienteAuth");
     sessionStorage.removeItem("nomeClienteLogado");
+    // Para o rastreamento se for motorista saindo
+    if (watchID) navigator.geolocation.clearWatch(watchID);
     window.location.href = "index.html";
+}
+
+// ========== RASTREAMENTO GPS EM TEMPO REAL ==========
+let watchID = null;
+
+function iniciarRastreamentoMotorista() {
+    if ("geolocation" in navigator) {
+        // Opções para alta precisão
+        const options = {
+            enableHighAccuracy: true,
+            maximumAge: 30000,
+            timeout: 27000
+        };
+
+        watchID = navigator.geolocation.watchPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+                const posicao = {
+                    lat: latitude,
+                    lng: longitude,
+                    ultimaAtualizacao: new Date().toISOString()
+                };
+                localStorage.setItem('posicaoMotorista', JSON.stringify(posicao));
+                console.log("🚙 Posição do motorista atualizada:", posicao);
+                
+                // Se estiver na página do motorista e houver um mapa (opcional futuro), poderia atualizar aqui
+            },
+            (error) => {
+                console.error("Erro no GPS:", error.message);
+                // adicionarLog(`ERRO GPS: ${error.message}`);
+            },
+            options
+        );
+    } else {
+        alert("Seu navegador não suporta geolocalização.");
+    }
 }
 
 // ========== LÓGICA DO INDEX.HTML ==========
@@ -433,6 +471,20 @@ function carregarMapa(pedidosRenderizados) {
         }
     });
 
+    // Adiciona a posição do Motorista no mapa do Admin
+    const posicaoMoto = JSON.parse(localStorage.getItem('posicaoMotorista'));
+    if (posicaoMoto && posicaoMoto.lat && posicaoMoto.lng) {
+        const iconMoto = L.icon({
+            iconUrl: 'https://cdn-icons-png.flaticon.com/512/2555/2555013.png', // Ícone de caminhão
+            iconSize: [40, 40],
+            iconAnchor: [20, 40],
+            popupAnchor: [0, -40]
+        });
+        const markerMoto = L.marker([posicaoMoto.lat, posicaoMoto.lng], { icon: iconMoto }).addTo(map);
+        markerMoto.bindPopup(`<b>🚚 Motorista em Tempo Real</b><br>Última atualização: ${new Date(posicaoMoto.ultimaAtualizacao).toLocaleTimeString()}`);
+        latLngs.push([posicaoMoto.lat, posicaoMoto.lng]);
+    }
+
     // Ajusta o zoom do mapa se houver marcadores
     if (latLngs.length > 0) {
         const bounds = L.latLngBounds(latLngs);
@@ -473,6 +525,11 @@ document.addEventListener('DOMContentLoaded', () => {
     carregarDashboard(); // Pro admin
     carregarMotorista(); // Pro motorista
     renderizarLogs();    // Pro admin
+    
+    // Se logado como motorista, inicia GPS
+    if (sessionStorage.getItem("motoAuth") === "true") {
+        iniciarRastreamentoMotorista();
+    }
 });
 
 function despacharPedido(idPedido) {
@@ -738,9 +795,16 @@ function rastrearPedidoCliente() {
                     posAtualPin = [latLoja, lngLoja];
                     textoPin = '<b>🏬 Loja</b><br>Preparando seu pedido...';
                 } else if (pedido.status === 'Saiu para Entrega') {
-                    // Simula que o motorista está no meio do caminho (na metade)
-                    posAtualPin = [pedido.lat - 0.002, pedido.lng - 0.002];
-                    textoPin = '<b>🚚 Motorista</b><br>A caminho da sua casa!';
+                    // Usa a posição real do motorista se disponível
+                    const posicaoMotoReal = JSON.parse(localStorage.getItem('posicaoMotorista'));
+                    if (posicaoMotoReal && posicaoMotoReal.lat && posicaoMotoReal.lng) {
+                        posAtualPin = [posicaoMotoReal.lat, posicaoMotoReal.lng];
+                        textoPin = '<b>🚚 Motorista</b><br>A caminho da sua casa! (GPS Real)';
+                    } else {
+                        // Backup simulação se GPS não estiver disponível
+                        posAtualPin = [pedido.lat - 0.002, pedido.lng - 0.002];
+                        textoPin = '<b>🚚 Motorista</b><br>A caminho da sua casa!';
+                    }
                 } else if (pedido.status === 'Entregue') {
                     posAtualPin = [pedido.lat, pedido.lng];
                     textoPin = '<b>✅ Pedido Entregue</b><br>Aproveite!';
