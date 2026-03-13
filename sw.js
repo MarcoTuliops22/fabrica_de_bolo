@@ -2,7 +2,7 @@ const CACHE_NAME = 'logistica-app-v1';
 const urlsToCache = [
   './',
   './index.html',
-  './home.html',
+  './cliente.html',
   './admin.html',
   './motorista.html',
   './style.css',

@@ -100,7 +100,7 @@ function fazerLogin() {
         } else if (user.tipo === 'cliente') {
             sessionStorage.setItem("clienteAuth", "true");
             sessionStorage.setItem("nomeClienteLogado", user.usuario);
-            window.location.href = "home.html"; // Tela de Cliente/Geral
+            window.location.href = "cliente.html"; // Tela de Cliente/Geral
         }
     } else {
         alert("Usuário ou senha incorretos!");

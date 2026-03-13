@@ -21,6 +21,12 @@
             });
         }
     </script>
+    <script>
+        // Verificação de Autenticação: Abre o login se não for motorista (ou admin)
+        if (sessionStorage.getItem("motoAuth") !== "true" && sessionStorage.getItem("adminAuth") !== "true") {
+            window.location.href = "index.html";
+        }
+    </script>
 </head>
 
 <body>
