@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acesso Restrito - Logística</title>
+    <title>ILKA MARTINELLI - Logística</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#3498db">
@@ -17,17 +17,22 @@
     </header>
 
     <section class="formulario" style="max-width: 400px; margin: 0 auto; text-align: center;">
-        
+
         <!-- DIV DE LOGIN -->
         <div id="box-login">
             <h2 id="titulo-login">Faça seu Login</h2>
             <input type="text" id="usuario-login" placeholder="Nome de Usuário">
             <div style="position: relative;">
-                <input type="password" id="senha-login" placeholder="Senha" style="width: 100%; box-sizing: border-box; padding-right: 40px;">
-                <span onclick="mostrarOcultarSenha('senha-login', 'olho-login')" id="olho-login" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 18px;">👁️</span>
+                <input type="password" id="senha-login" placeholder="Senha"
+                    style="width: 100%; box-sizing: border-box; padding-right: 40px;">
+                <span onclick="mostrarOcultarSenha('senha-login', 'olho-login')" id="olho-login"
+                    style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 18px;">👁️</span>
             </div>
-            <button onclick="fazerLogin()" style="width: 100%; margin-top: 15px; background-color: #34495e;">Entrar no Sistema</button>
-            <p style="margin-top: 15px; font-size: 14px;">Não possui conta? <a href="#" onclick="alternarTela('cadastro')" style="color: #3498db; text-decoration: none; font-weight:bold;">Cadastre-se</a></p>
+            <button onclick="fazerLogin()" style="width: 100%; margin-top: 15px; background-color: #34495e;">Entrar no
+                Sistema</button>
+            <p style="margin-top: 15px; font-size: 14px;">Não possui conta? <a href="#"
+                    onclick="alternarTela('cadastro')"
+                    style="color: #3498db; text-decoration: none; font-weight:bold;">Cadastre-se</a></p>
         </div>
 
         <!-- DIV DE CADASTRO (Oculta por padrão) -->
@@ -35,17 +40,22 @@
             <h2>Criar Conta</h2>
             <input type="text" id="usuario-cad" placeholder="Escolha um Usuário/Nome">
             <div style="position: relative; margin-bottom: 5px;">
-                <input type="password" id="senha-cad" placeholder="Crie uma Senha" style="width: 100%; box-sizing: border-box; padding-right: 40px; margin-bottom:0px;">
-                <span onclick="mostrarOcultarSenha('senha-cad', 'olho-cad')" id="olho-cad" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 18px;">👁️</span>
+                <input type="password" id="senha-cad" placeholder="Crie uma Senha"
+                    style="width: 100%; box-sizing: border-box; padding-right: 40px; margin-bottom:0px;">
+                <span onclick="mostrarOcultarSenha('senha-cad', 'olho-cad')" id="olho-cad"
+                    style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 18px;">👁️</span>
             </div>
             <p style="text-align:left; margin-bottom:5px; font-size:14px;">Que tipo de conta deseja criar?</p>
-            <select id="tipo-cad" style="width: 100%; margin-bottom: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+            <select id="tipo-cad"
+                style="width: 100%; margin-bottom: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
                 <option value="cliente">Cliente (Fazer/Acompanhar Pedidos)</option>
                 <option value="motorista">Motorista (Fazer Entregas)</option>
                 <option value="admin">Administrador (Gerenciar Sistema)</option>
             </select>
-            <button onclick="cadastrarUsuario()" style="width: 100%; margin-top: 15px; background-color: #27ae60;">Finalizar Cadastro</button>
-            <p style="margin-top: 15px; font-size: 14px;">Já tem uma conta? <a href="#" onclick="alternarTela('login')" style="color: #3498db; text-decoration: none; font-weight:bold;">Faça Login</a></p>
+            <button onclick="cadastrarUsuario()"
+                style="width: 100%; margin-top: 15px; background-color: #27ae60;">Finalizar Cadastro</button>
+            <p style="margin-top: 15px; font-size: 14px;">Já tem uma conta? <a href="#" onclick="alternarTela('login')"
+                    style="color: #3498db; text-decoration: none; font-weight:bold;">Faça Login</a></p>
         </div>
 
     </section>
@@ -66,9 +76,10 @@
                 </button>
             </div>
         </div>
-        
+
         <p id="msg-instalar-manual" style="font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 20px;">
-            Para "baixar" manualmente: Clique nos 3 pontos ⋮ do navegador e selecione <b>"Instalar Aplicativo"</b> ou <b>"Adicionar à tela de início"</b>.
+            Para "baixar" manualmente: Clique nos 3 pontos ⋮ do navegador e selecione <b>"Instalar Aplicativo"</b> ou
+            <b>"Adicionar à tela de início"</b>.
         </p>
     </div>
 
@@ -83,11 +94,11 @@
                 document.getElementById('box-login').style.display = 'block';
             }
         }
-        
+
         function mostrarOcultarSenha(idInput, idOlho) {
             const input = document.getElementById(idInput);
             const olho = document.getElementById(idOlho);
-            
+
             if (input.type === 'password') {
                 input.type = 'text';
                 olho.innerText = '🙈'; // Olho fechado
@@ -96,17 +107,17 @@
                 olho.innerText = '👁️'; // Olho aberto
             }
         }
-        
+
         // Permite logar com a tecla Enter
-        document.addEventListener('keypress', function(e) {
+        document.addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
-                if(document.getElementById('box-login').style.display !== 'none') fazerLogin();
+                if (document.getElementById('box-login').style.display !== 'none') fazerLogin();
                 else cadastrarUsuario();
             }
         });
-        
+
         // Verifica se já existe um Administrador ao carregar o Cadastro
-        window.addEventListener('load', function() {
+        window.addEventListener('load', function () {
             // Arrays usuarios vem do script.js
             if (typeof usuarios !== 'undefined') {
                 const temAdmin = usuarios.some(u => u.tipo === 'admin');
@@ -139,10 +150,10 @@
             }
             deferredPrompt = null;
         });
-        
+
         // Registrar Service Worker para funcionar offline
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(() => {});
+            navigator.serviceWorker.register('sw.js').catch(() => { });
         }
     </script>
 </body>
