@@ -4,15 +4,21 @@
 <head>
 
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema Intealigente de Logística</title>
 
     <link rel="stylesheet" href="style.css">
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <!-- Chart.js para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SheetJS para leitura de Excel/CSV -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#3498db">
     <link rel="apple-touch-icon" href="icon-192x192.png">
+
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -95,7 +101,7 @@
                 <th>Cliente</th>
                 <th>Produto</th>
                 <th>Quantidade</th>
-                <th>Rota</th>
+                <th>Caminhão</th>
                 <th>Endereço</th>
                 <th>Status</th>
                 <th>Lucro</th>
@@ -135,6 +141,219 @@
     <p id="previsao"></p>
 
 </section>
+
+<!-- ======================= DASHBOARD POWER BI ======================= -->
+<section style="background: #1a1a2e; padding: 25px; border-radius: 12px; margin: 20px 0;">
+
+    <!-- Cabeçalho com botões -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
+        <div>
+            <h2 style="color: #fff; margin: 0;">📊 Dashboard Analítico</h2>
+            <p style="color: #aaa; font-size: 13px; margin: 4px 0 0;">Importe uma planilha ou exporte os dados do sistema para visualizar.</p>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <!-- Botão Exportar dados do sistema -->
+            <button onclick="exportarDadosSistema()" style="background: #e94560; color: white; padding: 10px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px;">
+                📤 Exportar Dados do Sistema
+            </button>
+            <!-- Botão carregar planilha externa -->
+            <label for="input-planilha" style="cursor:pointer; background: #0f3460; color: white; padding: 10px 16px; border-radius: 8px; font-size: 14px; display: flex; align-items: center; gap: 8px; border: 1px solid #e94560;">
+                📂 Carregar Planilha
+                <input type="file" id="input-planilha" accept=".xlsx,.xls,.csv" style="display:none" onchange="lerPlanilha(this)">
+            </label>
+        </div>
+    </div>
+
+    <!-- KPIs -->
+    <div id="kpi-container" style="display: none; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 25px;"></div>
+
+    <!-- Gráficos -->
+    <div id="graficos-container" style="display: none; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+        <div style="background: #16213e; border-radius: 10px; padding: 20px;">
+            <h4 style="color:#e94560; margin: 0 0 15px;">Gráfico de Barras</h4>
+            <canvas id="grafico-barras"></canvas>
+        </div>
+        <div style="background: #16213e; border-radius: 10px; padding: 20px;">
+            <h4 style="color:#e94560; margin: 0 0 15px;">Gráfico de Pizza</h4>
+            <canvas id="grafico-pizza"></canvas>
+        </div>
+        <div style="background: #16213e; border-radius: 10px; padding: 20px; grid-column: 1/-1;">
+            <h4 style="color:#e94560; margin: 0 0 15px;">Linha de Tendência</h4>
+            <canvas id="grafico-linha"></canvas>
+        </div>
+    </div>
+
+    <!-- Tabela de pré-visualização -->
+    <div id="tabela-planilha-container" style="display:none; margin-top: 20px; overflow-x: auto; border-radius: 8px;">
+        <h4 style="color: #aaa; margin-bottom: 10px;">👁 Pré-visualização dos Dados</h4>
+        <div id="tabela-planilha"></div>
+    </div>
+
+    <p id="msg-sem-planilha" style="color:#555; text-align:center; padding: 40px 0; font-size: 14px;">
+        Clique em <strong style="color:#e94560">"Exportar Dados do Sistema"</strong> para gerar automaticamente o dashboard com os pedidos atuais, ou carregue uma planilha externa.
+    </p>
+</section>
+
+<script>
+// ===================== DASHBOARD BI =====================
+let chartBarras = null, chartPizza = null, chartLinha = null;
+
+// Exporta os pedidos do localStorage como dados para o dashboard
+function exportarDadosSistema() {
+    const pedidos = JSON.parse(localStorage.getItem('pedidos')) || [];
+    if (pedidos.length === 0) { alert('Nenhum pedido encontrado no sistema.'); return; }
+
+    // Gerar o dashboard com os pedidos
+    gerarDashboard(pedidos);
+
+    // Também baixar como xlsx
+    if (typeof XLSX !== 'undefined') {
+        const ws = XLSX.utils.json_to_sheet(pedidos);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Pedidos');
+        XLSX.writeFile(wb, 'pedidos_sistema.xlsx');
+    }
+}
+
+function lerPlanilha(input) {
+    const arquivo = input.files[0];
+    if (!arquivo) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        let dados = [];
+        const nome = arquivo.name.toLowerCase();
+        if (nome.endsWith('.csv')) {
+            const txt = e.target.result;
+            const linhas = txt.split('\n').filter(l => l.trim());
+            const cab = linhas[0].split(/[;,]/).map(c => c.trim().replace(/"/g,''));
+            for (let i = 1; i < linhas.length; i++) {
+                const vals = linhas[i].split(/[;,]/).map(v => v.trim().replace(/"/g,''));
+                const row = {};
+                cab.forEach((col, idx) => row[col] = vals[idx] || '');
+                dados.push(row);
+            }
+        } else {
+            const wb = XLSX.read(e.target.result, { type: 'array' });
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            dados = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        }
+        if (dados.length === 0) { alert('Planilha vazia ou formato inválido.'); return; }
+        gerarDashboard(dados);
+    };
+    nome.endsWith('.csv') ? reader.readAsText(arquivo) : reader.readAsArrayBuffer(arquivo);
+}
+
+function gerarDashboard(dados) {
+    document.getElementById('msg-sem-planilha').style.display = 'none';
+    const colunas = Object.keys(dados[0]);
+    const colsNum = colunas.filter(c => dados.slice(0,20).some(r => !isNaN(parseFloat(r[c])) && String(r[c]).trim() !== ''));
+    const colsTexto = colunas.filter(c => !colsNum.includes(c));
+    const labelCol = colsTexto[0] || colunas[0];
+    const valCol = colsNum[0] || colunas[1];
+    const valCol2 = colsNum[1] || colsNum[0];
+
+    // KPIs
+    const kpiEl = document.getElementById('kpi-container');
+    kpiEl.style.display = 'grid';
+    kpiEl.innerHTML = kpiCard('📋 Registros', dados.length, '#0f3460');
+    colsNum.slice(0,4).forEach(col => {
+        const soma = dados.reduce((a,r) => a + (parseFloat(r[col]) || 0), 0);
+        kpiEl.innerHTML += kpiCard('Σ ' + col, 'R$ ' + soma.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}), '#e94560');
+        kpiEl.innerHTML += kpiCard('Ø ' + col, 'R$ ' + (soma/dados.length).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}), '#533483');
+    });
+
+    const grafDiv = document.getElementById('graficos-container');
+    grafDiv.style.display = 'grid';
+
+    const labels = dados.slice(0,20).map(r => String(r[labelCol]).substring(0,15));
+    const vBar   = dados.slice(0,20).map(r => parseFloat(r[valCol])  || 0);
+    const vLinha = dados.slice(0,20).map(r => parseFloat(r[valCol2]) || 0);
+    const cores  = ['#e94560','#3498db','#27ae60','#f39c12','#9b59b6','#1abc9c','#e67e22','#e74c3c'];
+
+    // Barras
+    if (chartBarras) chartBarras.destroy();
+    chartBarras = new Chart(document.getElementById('grafico-barras'), {
+        type: 'bar',
+        data: { labels, datasets: [{ label: valCol, data: vBar, backgroundColor: cores }] },
+        options: { responsive: true, plugins:{ legend:{ labels:{ color:'#fff' } } }, scales:{ x:{ ticks:{ color:'#aaa' } }, y:{ ticks:{ color:'#aaa' }, grid:{ color:'#333' } } } }
+    });
+
+    // Pizza
+    if (chartPizza) chartPizza.destroy();
+    const grupos = {};
+    dados.forEach(r => { const k = String(r[labelCol]).substring(0,15); grupos[k] = (grupos[k]||0) + (parseFloat(r[valCol])||1); });
+    chartPizza = new Chart(document.getElementById('grafico-pizza'), {
+        type: 'doughnut',
+        data: { labels: Object.keys(grupos).slice(0,10), datasets: [{ data: Object.values(grupos).slice(0,10), backgroundColor: cores }] },
+        options: { responsive: true, plugins:{ legend:{ labels:{ color:'#fff' } } } }
+    });
+
+    // Linha de tendência
+    if (chartLinha) chartLinha.destroy();
+    chartLinha = new Chart(document.getElementById('grafico-linha'), {
+        type: 'line',
+        data: { labels, datasets: [
+            { label: valCol,  data: vBar,   borderColor: '#e94560', backgroundColor:'rgba(233,69,96,0.15)', tension:0.4, fill:true },
+            { label: valCol2, data: vLinha, borderColor: '#3498db', backgroundColor:'rgba(52,152,219,0.15)', tension:0.4, fill:true }
+        ]},
+        options: { responsive: true, plugins:{ legend:{ labels:{ color:'#fff' } } }, scales:{ x:{ ticks:{ color:'#aaa' } }, y:{ ticks:{ color:'#aaa' }, grid:{ color:'#333' } } } }
+    });
+
+    // Tabela
+    const tbl = document.getElementById('tabela-planilha-container');
+    tbl.style.display = 'block';
+    let html = '<table style="width:100%;border-collapse:collapse;font-size:13px;color:#ccc;">';
+    html += '<thead><tr>' + colunas.map(c => `<th style="background:#0f3460;padding:8px 12px;text-align:left;border-bottom:2px solid #e94560;">${c}</th>`).join('') + '</tr></thead><tbody>';
+    dados.slice(0,30).forEach((row,i) => {
+        const bg = i%2===0?'#16213e':'#1a1a2e';
+        html += `<tr style="background:${bg};">`+colunas.map(c=>`<td style="padding:7px 12px;border-bottom:1px solid #333;">${row[c]??''}</td>`).join('')+'</tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('tabela-planilha').innerHTML = html;
+}
+
+function kpiCard(titulo, valor, cor) {
+    return `<div style="background:${cor};border-radius:10px;padding:18px;text-align:center;">
+        <p style="color:#aaa;font-size:12px;margin:0 0 5px;">${titulo}</p>
+        <h3 style="color:#fff;margin:0;font-size:20px;">${valor}</h3>
+    </div>`;
+}
+</script>
+
+<!-- MODAL DE CHAT ADMIN -->
+
+<!-- MODAL DE CHAT ADMIN -->
+<div id="modal-chat-admin" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.6);">
+    <div style="background-color:#fff; margin:5% auto; padding:25px; border-radius:12px; width:92%; max-width:520px; position:relative; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+        <span id="close-chat-admin" style="position:absolute; right:15px; top:12px; font-size:26px; cursor:pointer; color:#aaa; line-height:1;">&times;</span>
+        <h3 style="margin-top:0; color:#2c3e50;">💬 Chat Central</h3>
+
+        <!-- Seletor de destinatário -->
+        <div style="display:flex; gap:8px; margin-bottom:12px;">
+            <button onclick="filtrarChatAdmin('Todos')"   id="btn-chat-todos"     style="flex:1; padding:8px; border-radius:8px; background:#34495e; color:#fff; font-size:13px;">🌐 Todos</button>
+            <button onclick="filtrarChatAdmin('Cliente')" id="btn-chat-cliente"   style="flex:1; padding:8px; border-radius:8px; background:#3498db; color:#fff; font-size:13px;">👤 Cliente</button>
+            <button onclick="filtrarChatAdmin('Motorista')" id="btn-chat-moto"   style="flex:1; padding:8px; border-radius:8px; background:#f39c12; color:#fff; font-size:13px;">🚚 Motorista</button>
+        </div>
+
+        <!-- Histórico filtrado -->
+        <div id="container-chat-admin" class="chat-historico" style="height:200px;"></div>
+
+        <!-- Área de envio -->
+        <div style="margin-top:10px;">
+            <p style="font-size:12px; color:#888; margin:0 0 6px;">Respondendo como <strong>Admin</strong> para:
+                <select id="destinatario-admin" style="display:inline-block; width:auto; padding:3px 8px; margin:0; font-size:12px; border-radius:5px;">
+                    <option value="Cliente">👤 Cliente</option>
+                    <option value="Motorista">🚚 Motorista</option>
+                    <option value="Todos">🌐 Todos (broadcast)</option>
+                </select>
+            </p>
+            <div class="chat-input-area" style="padding:0;">
+                <input type="text" id="chat-input-admin" placeholder="Digite sua mensagem...">
+                <button onclick="enviarMensagemAdmin()" style="background:#34495e; color:#fff; border-radius:20px; padding:8px 18px;">Enviar</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script src="script.js"></script>
 </body>

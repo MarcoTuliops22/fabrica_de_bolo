@@ -1,11 +1,11 @@
 {
-  "name": "Sistema de Logística",
-  "short_name": "Logística",
-  "start_url": "./index.html",
+  "name": "ILKA APP - Logística Martinelli",
+  "short_name": "ILKA APP",
+  "start_url": "./login.html",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#3498db",
-  "description": "Sistema Inteligente de Logística para Gestão de Pedidos e Entregas",
+  "background_color": "#1a1a1a",
+  "theme_color": "#c9a227",
+  "description": "Sistema Inteligente de Logística para Gestão de Pedidos e Entregas - Ilka Martinelli",
   "icons": [
     {
       "src": "icon-192x192.png",
@@ -14,6 +14,11 @@
     },
     {
       "src": "icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "logo.png",
       "sizes": "512x512",
       "type": "image/png"
     }

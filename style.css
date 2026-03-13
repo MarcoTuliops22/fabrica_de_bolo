@@ -1,9 +1,119 @@
 body {
-    font-family: Arial;
-    background: #f5f6fa;
+    font-family: Arial, sans-serif;
+    background: #eef2f7;
     margin: 0;
     padding: 20px;
+    min-height: 100vh;
+    color: #2c3e50;
 }
+
+/* ===== LOGIN: fundo + efeito glassmorphism ===== */
+body.bg-login {
+    background-color: #1a1a1a;
+    background-image: url('bg.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+body.bg-login header { color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.8); }
+body.bg-login header h1 { color: #c9a227; font-size: 2em; letter-spacing: 2px; }
+body.bg-login header p  { color: #ddd; }
+body.bg-login .formulario {
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    color: #fff;
+    width: 100%;
+    padding: 30px;
+}
+body.bg-login .formulario h2 { color: #c9a227; margin-top: 0; }
+body.bg-login .formulario a  { color: #c9a227 !important; }
+body.bg-login input {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 8px;
+    color: #fff;
+}
+body.bg-login input::placeholder { color: rgba(255,255,255,0.6); }
+/* ===== SEÇÃO DE DOWNLOAD PREMIUM (PWA/APK) ===== */
+.secao-download {
+    text-align: center;
+    margin-top: 30px;
+    width: 100%;
+    max-width: 400px;
+}
+
+.download-card {
+    background: rgba(201, 162, 39, 0.1);
+    border: 1px solid rgba(201, 162, 39, 0.3);
+    border-radius: 12px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    backdrop-filter: blur(10px);
+    animation: fadeIn 0.8s ease-out;
+}
+
+.download-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+    color: #fff;
+}
+
+.download-icon {
+    font-size: 32px;
+}
+
+.download-info strong {
+    display: block;
+    color: #c9a227;
+    font-size: 16px;
+}
+
+.download-info p {
+    margin: 2px 0 0;
+    font-size: 12px;
+    color: rgba(255,255,255,0.7);
+}
+
+.btn-premium-download {
+    background: #c9a227 !important;
+    color: #1a1a1a !important;
+    font-weight: 800 !important;
+    padding: 12px 25px !important;
+    border-radius: 30px !important;
+    letter-spacing: 1px;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 15px rgba(201, 162, 39, 0.4);
+}
+
+.btn-premium-download:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 20px rgba(201, 162, 39, 0.6);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+body.bg-login #msg-instalar { color: rgba(255,255,255,0.5) !important; }
 
 header {
     text-align: center;
@@ -111,4 +221,160 @@ td {
     margin-top: 15px;
     padding-top: 15px;
     border-top: 1px solid #eee;
+}
+
+/* ===== SISTEMA DE CHAT ===== */
+.chat-box {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-top: 15px;
+    background: #fdfdfd;
+}
+
+.chat-historico {
+    height: 150px;
+    overflow-y: auto;
+    padding: 10px;
+    background: #f9f9f9;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mensagem {
+    padding: 8px 12px;
+    border-radius: 15px;
+    max-width: 80%;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.msg-cliente {
+    background: #d4e6f1;
+    align-self: flex-start;
+    border-bottom-left-radius: 2px;
+}
+
+.msg-admin {
+    background: #d5f5e3;
+    align-self: flex-end;
+    border-bottom-right-radius: 2px;
+    text-align: right;
+}
+
+.msg-motorista {
+    background: #fdebd0;
+    align-self: flex-end;
+    border-bottom-right-radius: 2px;
+    text-align: right;
+}
+
+.msg-info {
+    font-size: 10px;
+    color: #7f8c8d;
+    display: block;
+    margin-top: 4px;
+}
+
+.chat-input-area {
+    display: flex;
+    padding: 10px;
+    gap: 10px;
+}
+
+.chat-input-area input {
+    margin: 0;
+    flex: 1;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    padding: 8px 15px;
+}
+
+.chat-input-area button {
+    margin: 0;
+    border-radius: 20px;
+    padding: 8px 20px;
+    background-color: #34495e;
+}
+
+/* Responsividade para Dispositivos Móveis */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    /* Transforma a exibição flexível lado a lado em uma coluna nas partes necessárias */
+    .cards {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    /* Faz com que os botões de ação e acesso no topo e formulários fiquem com 100% de largura no mobile */
+    button {
+        width: 100%;
+        margin: 5px 0;
+        box-sizing: border-box;
+        padding: 15px; /* Maior área de toque */
+        font-size: 16px;
+    }
+
+    input {
+        padding: 12px; /* Maior área de toque */
+    }
+
+    /* Para a área de produtos, deixar em grid ou flex ajustado */
+    .produtos button {
+        width: calc(50% - 14px);
+        margin: 5px;
+    }
+
+    /* Ajusta tamanho dos inputs para evitar transbordar a tela */
+    input, select, textarea {
+        box-sizing: border-box;
+        max-width: 100%;
+    }
+
+    /* Menu admin/motorista (flexível com inline styles) empilhamento */
+    div[style*="display: flex"], div[style*="display:flex"] {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px;
+    }
+    
+    /* Painel do dia: o filtro ficará responsivo */
+    .dashboard > div {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 15px;
+    }
+
+    /* Tabelas com barra de rolagem horizontal quando maiores que a tela */
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Reduzindo tamanho dos títulos em telas pequenas */
+    h1 {
+        font-size: 1.5em;
+    }
+    
+    h2 {
+        font-size: 1.25em;
+    }
+
+    /* Ajusta o padding para que as seções não fiquem coladas */
+    .formulario, .card, .pedido-card {
+        padding: 15px;
+    }
+
+    /* Ajuste no filtro de relatório do admin */
+    input[type="date"] {
+        width: 100% !important;
+        margin: 5px 0 !important;
+        box-sizing: border-box;
+    }
 }

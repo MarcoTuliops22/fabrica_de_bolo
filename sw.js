@@ -7,6 +7,8 @@ const urlsToCache = [
   './style.css',
   './script.js',
   './manifest.json',
+  './logo.png',
+  './icon-512x512.png',
   'https://unpkg.com/leaflet/dist/leaflet.css',
   'https://unpkg.com/leaflet/dist/leaflet.js'
 ];

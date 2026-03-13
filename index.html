@@ -4,6 +4,7 @@
 <head>
 
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema Inteligente de Logística</title>
 
     <link rel="stylesheet" href="style.css">
@@ -24,61 +25,108 @@
         }
     </script>
 </head>
-
 <body>
-    <div style="display:flex; justify-content:space-between; margin-bottom: 20px;">
-        <button onclick="irAdmin()">🔐 Acesso ADM</button>
-        <button onclick="irMotorista()" style="background-color: #f39c12;">🚚 Acesso Motorista</button>
+    <!-- Botões visíveis padrão para todos (Deslogados) -->
+    <div id="nav-padrao" style="display:flex; justify-content:flex-end; gap: 10px; margin-bottom: 20px;">
+        <button onclick="window.location.href='login.html'" style="background-color: #34495e; padding: 5px 15px;">👤 Fazer Login</button>
     </div>
 
-    <header>
-        <h1>🥖 Sistema Inteligente de Logística</h1>
-        <p>Controle de pedidos, produção e entregas</p>
-    </header>
+    <!-- Container do Admin e Logout (Escondidos por padrão) -->
+    <div id="nav-logado" style="display:none; justify-content:space-between; gap: 10px; margin-bottom: 20px;">
+        <button id="btn-admin" onclick="window.location.href='admin.html'" style="display:none; flex:1;">🔐 Painel Admin</button>
+        <button id="btn-moto" onclick="window.location.href='motorista.html'" style="display:none; background-color: #f39c12; flex:1;">🚚 Painel Motorista</button>
+        <button onclick="sairSistema()" style="background-color: #e74c3c; flex:1;">🚪 Sair</button>
+    </div>
 
-    <section class="formulario">
+    <script>
+        // Ocultar botão de login apenas se estiver autenticado com algum cargo
+        const estaAutenticado = sessionStorage.getItem("adminAuth") === "true" || 
+                                sessionStorage.getItem("motoAuth") === "true" || 
+                                sessionStorage.getItem("clienteAuth") === "true";
 
-        <h2>Registrar Pedido</h2>
+        if (estaAutenticado) {
+            document.getElementById('nav-padrao').style.display = 'none';
+            document.getElementById('nav-logado').style.display = 'flex';
+            
+            // Controle específico: Quem vê quais botões?
+            if (sessionStorage.getItem("adminAuth") === "true") {
+                // Admin vê tanto seu painel quanto do motorista
+                document.getElementById('btn-admin').style.display = 'block';
+                document.getElementById('btn-moto').style.display = 'block';
+            } else if (sessionStorage.getItem("motoAuth") === "true") {
+                // Motorista vê apenas o seu painel
+                document.getElementById('btn-moto').style.display = 'block';
+            } 
+            // Cliente autenticado cai aqui e vê apenas o botão de SAIR, 
+            // já que os botões btn-admin e btn-moto continuam com display:none.
+        }
+    </script>
 
-        <input id="cliente" placeholder="Cliente">
+<header>
+    <h1>🥖 Sistema Inteligente de Logística</h1>
+    <p>Controle de pedidos, produção e entregas</p>
+</header>
 
-        <input id="produto" placeholder="Produto">
+<section class="formulario">
 
-        <div class="produtos">
-            <p>Selecionar Produto:</p>
+    <h2>Registrar Pedido</h2>
 
-            <button onclick="selecionarProduto('Pão Francês')">Pão Francês</button>
-            <button onclick="selecionarProduto('Pão Doce')">Pão Doce</button>
-            <button onclick="selecionarProduto('Pão de Forma')">Pão de Forma</button>
-            <button onclick="selecionarProduto('Bolo')">Bolo</button>
+    <input id="cliente" placeholder="Cliente">
 
-        </div>
+    <input id="produto" placeholder="Produto" oninput="calcularValorPedido()">
 
-        <input id="quantidade" type="number" placeholder="Quantidade">
+    <div class="produtos">
+        <p>Selecionar Produto:</p>
 
-        <input id="rota" placeholder="Rota">
+        <button onclick="selecionarProduto('Pão Francês')">Pão Francês</button>
+        <button onclick="selecionarProduto('Pão Doce')">Pão Doce</button>
+        <button onclick="selecionarProduto('Pão de Forma')">Pão de Forma</button>
+        <button onclick="selecionarProduto('Bolo')">Bolo</button>
 
-        <input id="custo" type="number" placeholder="Custo entrega">
+    </div>
 
-        <input id="valor" type="number" placeholder="Valor venda">
+    <input id="quantidade" type="number" placeholder="Quantidade" minimum="1" oninput="calcularValorPedido()">
 
-        <input id="endereco" placeholder="Endereço de Entrega (Ex: Rua XV, Curitiba)">
+    <input id="caminhao" placeholder="Caminhão/Motorista (Nome ou Num)">
 
-        <button onclick="registrarPedido()">Registrar</button>
-        <p id="codigo-gerado-display" style="text-align:center; color:#27ae60; margin-top:10px;"></p>
+    <input id="custo" type="number" placeholder="Custo entrega">
 
-    </section>
+    <input id="valor" type="number" placeholder="Valor venda">
 
-    <!-- SEÇÃO DO CLIENTE PARA ACOMPANHAR O PEDIDO -->
-    <section class="formulario" style="margin-top: 20px;">
-        <h2>🔍 Acompanhar Meu Pedido</h2>
-        <p>Digite o código de 4 dígitos que você recebeu para rastrear a entrega.</p>
-        <input id="codigo-rastreio" placeholder="Ex: 1234" maxlength="4">
-        <button onclick="rastrearPedidoCliente()" style="background-color: #3498db;">Rastrear</button>
-        <div id="resultado-rastreio"></div>
-    </section>
+    <!-- CEP com busca automática via ViaCEP -->
+    <div style="display:flex; gap:8px; align-items:center;">
+        <input id="cep" type="text" placeholder="CEP (somente números)" maxlength="9" style="flex:1;" oninput="formatarCEP(this)">
+        <button type="button" onclick="buscarCEP()" style="padding:10px 14px; margin:0; background:#3498db;">🔍</button>
+    </div>
+    <input id="endereco" placeholder="Endereço completo (preenchido pelo CEP)" style="background:#f0f4f8; color:#555;" readonly>
+    <input id="numero-end" placeholder="Número / Complemento (Ex: 42, Apto 3)">
 
-    <script src="script.js"></script>
+    <button onclick="registrarPedido()">Registrar</button>
+    <p id="codigo-gerado-display" style="text-align:center; color:#27ae60; margin-top:10px;"></p>
+
+</section>
+
+<!-- SEÇÃO DO CLIENTE PARA ACOMPANHAR O PEDIDO -->
+<section class="formulario" style="margin-top: 20px;">
+    <h2>🔍 Acompanhar Meu Pedido</h2>
+    <p>Digite o código de 4 dígitos que você recebeu para rastrear a entrega.</p>
+    <input id="codigo-rastreio" placeholder="Ex: 1234" maxlength="4">
+    <button onclick="rastrearPedidoCliente()" style="background-color: #3498db;">Rastrear</button>
+    <div id="resultado-rastreio"></div>
+</section>
+
+<!-- SEÇÃO DO CLIENTE PARA HISTÓRICO DE COMPRAS -->
+<section class="formulario" style="margin-top: 20px;">
+    <h2>📜 Meu Histórico de Compras</h2>
+    <p>Digite seu nome (como foi registrado no pedido) para ver todas as suas compras.</p>
+    <div style="display:flex; gap:10px; margin-top:10px;">
+        <input id="nome-historico" placeholder="Seu Nome" style="margin: 0;">
+        <button onclick="verHistoricoCliente()" style="background-color: #9b59b6; margin: 0;">Ver Histórico</button>
+    </div>
+    <div id="resultado-historico" style="margin-top: 15px;"></div>
+</section>
+
+<script src="script.js"></script>
 
 </body>
 

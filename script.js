@@ -46,40 +46,164 @@ function renderizarLogs() {
 }
 
 // ========== AUTENTICAÇÃO E PERFIS ==========
-function irAdmin() {
-    sessionStorage.setItem("adminAuth", "true");
-    window.location.href = "admin.html";
+const usuariosPadrao = [
+    { usuario: 'admin', senha: '123', tipo: 'admin' },
+    { usuario: 'motorista', senha: '123', tipo: 'motorista' }
+];
+let usuarios = JSON.parse(localStorage.getItem('usuarios')) || usuariosPadrao;
+
+function cadastrarUsuario() {
+    const usuario = document.getElementById('usuario-cad').value.trim();
+    const senha = document.getElementById('senha-cad').value.trim();
+    const tipo = document.getElementById('tipo-cad').value;
+
+    if (!usuario || !senha) {
+        alert("Preencha todos os campos!");
+        return;
+    }
+
+    if (usuarios.find(u => u.usuario.toLowerCase() === usuario.toLowerCase())) {
+        alert("Este usuário já existe, escolha outro nome ou faça login.");
+        return;
+    }
+    
+    // Trava do Backend: Impede criar outro admin se já existir um
+    if (tipo === 'admin') {
+        const algumAdminExiste = usuarios.find(u => u.tipo === 'admin');
+        if (algumAdminExiste) {
+            alert("Já existe um administrador cadastrado no sistema. Não é possível criar outro.");
+            return;
+        }
+    }
+
+    usuarios.push({ usuario, senha, tipo });
+    // Salva a lista atualizada de usuários no localStorage
+    localStorage.setItem('usuarios', JSON.stringify(usuarios));
+    alert("Conta criada com sucesso! Faça seu login.");
+    alternarTela('login');
 }
 
-function irMotorista() {
-    window.location.href = "motorista.html";
+function fazerLogin() {
+    const usuarioDigitado = document.getElementById('usuario-login').value.trim();
+    const senhaDigitada = document.getElementById('senha-login').value.trim();
+    
+    // Procura o usuário no array salvo
+    const user = usuarios.find(u => u.usuario === usuarioDigitado && u.senha === senhaDigitada);
+
+    if (user) {
+        if (user.tipo === 'admin') {
+            sessionStorage.setItem("adminAuth", "true");
+            window.location.href = "admin.html";
+        } else if (user.tipo === 'motorista') {
+            sessionStorage.setItem("motoAuth", "true");
+            window.location.href = "motorista.html";
+        } else if (user.tipo === 'cliente') {
+            sessionStorage.setItem("clienteAuth", "true");
+            sessionStorage.setItem("nomeClienteLogado", user.usuario);
+            window.location.href = "index.html"; // Tela de Cliente/Geral
+        }
+    } else {
+        alert("Usuário ou senha incorretos!");
+    }
 }
 
 function sairSistema() {
     sessionStorage.removeItem("adminAuth");
     sessionStorage.removeItem("motoAuth");
-    window.location.href = "index.html";
+    sessionStorage.removeItem("clienteAuth");
+    sessionStorage.removeItem("nomeClienteLogado");
+    window.location.href = "login.html";
 }
 
 // ========== LÓGICA DO INDEX.HTML ==========
+const precosProdutos = {
+    'Pão Francês': 0.70,
+    'Pão Doce': 1.50,
+    'Pão de Forma': 8.00,
+    'Bolo': 25.00
+};
+
+// Tempos de preparo estimados por produto (em minutos)
+const temposPreparo = {
+    'Pão Francês': 20,
+    'Pão Doce': 40,
+    'Pão de Forma': 60,
+    'Bolo': 120
+};
+
 function selecionarProduto(nomeProduto) {
     const inputProduto = document.getElementById('produto');
     if (inputProduto) {
         inputProduto.value = nomeProduto;
+        calcularValorPedido();
     }
+}
+
+function calcularValorPedido() {
+    const produtoDigitado = document.getElementById('produto').value.trim().toLowerCase();
+    const quantidade = parseInt(document.getElementById('quantidade').value) || 0;
+    const valorInput = document.getElementById('valor');
+    
+    // Tabela de preços minúscula para facilitar a busca ignorando maiúsculas
+    const precosNorm = {};
+    for(let key in precosProdutos) {
+        precosNorm[key.toLowerCase()] = precosProdutos[key];
+    }
+    
+    // Calcula apenas se o produto constar na nossa tabela e a quantidade for maior que zero
+    if (produtoDigitado && precosNorm[produtoDigitado] && quantidade > 0) {
+        const precoUnitario = precosNorm[produtoDigitado];
+        const valorTotal = precoUnitario * quantidade;
+        valorInput.value = valorTotal.toFixed(2);
+    } else if (quantidade === 0 || !quantidade) {
+        // Não apaga forçadamente o valor caso o admin queira digitar um preço manual de um produto que não tá na tabela
+        // valorInput.value = ''; 
+    }
+}
+
+// ========== CEP AUTOMÁTICO ==========
+function formatarCEP(input) {
+    let v = input.value.replace(/\D/g,'');
+    if (v.length > 5) v = v.substring(0,5) + '-' + v.substring(5,8);
+    input.value = v;
+    if (v.replace('-','').length === 8) buscarCEP();
+}
+
+function buscarCEP() {
+    const cepInput = document.getElementById('cep');
+    if (!cepInput) return;
+    const cep = cepInput.value.replace(/\D/g,'');
+    if (cep.length !== 8) return;
+    const endInput = document.getElementById('endereco');
+    endInput.value = 'Buscando...';
+    fetch(`https://viacep.com.br/ws/${cep}/json/`)
+        .then(r => r.json())
+        .then(d => {
+            if (d.erro) {
+                endInput.value = '';
+                alert('CEP não encontrado. Verifique o número e tente novamente.');
+            } else {
+                endInput.value = `${d.logradouro}, ${d.bairro}, ${d.localidade} - ${d.uf}`;
+                const numInput = document.getElementById('numero-end');
+                if (numInput) numInput.focus();
+            }
+        })
+        .catch(() => { endInput.value = ''; alert('Erro na busca do CEP. Verifique sua internet.'); });
 }
 
 async function registrarPedido() {
     const cliente = document.getElementById('cliente').value;
     const produto = document.getElementById('produto').value;
     const quantidade = parseInt(document.getElementById('quantidade').value);
-    const rota = document.getElementById('rota').value;
+    const caminhao = document.getElementById('caminhao').value;
     const custo = parseFloat(document.getElementById('custo').value);
     const valor = parseFloat(document.getElementById('valor').value);
-    const endereco = document.getElementById('endereco').value;
+    const enderecoCEP = document.getElementById('endereco') ? document.getElementById('endereco').value : '';
+    const numeroEnd = document.getElementById('numero-end') ? document.getElementById('numero-end').value.trim() : '';
+    const endereco = numeroEnd ? `${enderecoCEP}, ${numeroEnd}` : enderecoCEP;
 
     // Validação básica
-    if (!cliente || !produto || isNaN(quantidade) || !rota || isNaN(custo) || isNaN(valor) || !endereco) {
+    if (!cliente || !produto || isNaN(quantidade) || !caminhao || isNaN(custo) || isNaN(valor) || !endereco) {
         alert("Preencha todos os campos corretamente.");
         return;
     }
@@ -125,7 +249,7 @@ async function registrarPedido() {
         cliente,
         produto,
         quantidade,
-        rota,
+        caminhao,
         endereco,
         custo,
         valor,
@@ -133,7 +257,9 @@ async function registrarPedido() {
         lat,
         lng,
         codigoSecreto,
-        status: "Preparando" // Preparando, Saiu para Entrega, ou Entregue
+        status: "Preparando", // Preparando, Saiu para Entrega, ou Entregue
+        tempoPreparo: temposPreparo[produto] || 30, // Pega da tabela ou 30 min padrão
+        previsaoChegada: "" // Será preenchido quando sair para entrega
     };
 
     pedidos.push(novoPedido);
@@ -158,15 +284,10 @@ async function registrarPedido() {
     document.getElementById('cliente').value = '';
     document.getElementById('produto').value = '';
     document.getElementById('quantidade').value = '';
-    document.getElementById('rota').value = '';
+    document.getElementById('caminhao').value = '';
     document.getElementById('endereco').value = '';
     document.getElementById('custo').value = '';
     document.getElementById('valor').value = '';
-}
-
-// Já existe um script inline para irAdmin() no index.html, mas mantemos como backup
-function irAdmin() {
-    window.location.href = "admin.html";
 }
 
 
@@ -226,6 +347,9 @@ function carregarDashboard() {
             htmlAcoes += `<button onclick="focarNoMapa(${p.lat}, ${p.lng})" style="margin-bottom:5px;">📍 Mapa</button><br>`;
         }
         
+        // Novo botão de Chat pro Admin
+        htmlAcoes += `<button onclick="abrirChatAdmin('${p.id}')" style="background-color: #9b59b6; margin-bottom:5px;">💬 Chat</button><br>`;
+        
         if (p.status === 'Preparando') {
             htmlAcoes += `<button onclick="despacharPedido('${p.id}')" style="background-color: #f39c12; font-size: 12px;">🚚 Despachar</button>`;
         }
@@ -234,7 +358,7 @@ function carregarDashboard() {
             <td>${p.cliente}</td>
             <td>${p.produto}</td>
             <td>${p.quantidade}</td>
-            <td>${p.rota}</td>
+            <td>${p.caminhao || '-'}</td>
             <td>${p.endereco || '-'}</td>
             <td style="${corStatus}">${p.status}</td>
             <td>R$ ${p.lucro.toFixed(2)}</td>
@@ -356,6 +480,13 @@ function despacharPedido(idPedido) {
     const index = pedidos.findIndex(p => p.id === idPedido);
     if (index !== -1) {
         pedidos[index].status = 'Saiu para Entrega';
+        
+        // Calcula previsão de chegada (ex: 45 min após sair)
+        const agora = new Date();
+        agora.setMinutes(agora.getMinutes() + 45); // Estimativa padrão de 45 min para entrega
+        const horaPrevisao = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        pedidos[index].previsaoChegada = horaPrevisao;
+
         localStorage.setItem('pedidos', JSON.stringify(pedidos));
         
         adicionarLog(`PEDIDO A CAMINHO 🚚: Pedido de ${pedidos[index].cliente} foi despachado ao motorista!`);
@@ -363,6 +494,33 @@ function despacharPedido(idPedido) {
         
         carregarDashboard();
     }
+}
+
+// Abre o Chat do Admin
+function abrirChatAdmin(idPedido) {
+    const modal = document.getElementById('modal-chat-admin');
+    if (!modal) return;
+    
+    // Mostra o modal
+    modal.style.display = 'block';
+    
+    // Ajusta o ID no html interno pra renderizar
+    document.getElementById('container-chat-admin').innerHTML = `
+        <div id="chat-box-${idPedido}" class="chat-historico" style="height: 300px;"></div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input-${idPedido}" placeholder="Digite sua mensagem para o Cliente/Motorista...">
+            <button onclick="enviarMensagemInput('${idPedido}', 'Admin')" style="color:white; padding: 5px 15px;">Enviar</button>
+        </div>
+    `;
+
+    renderizarChat(idPedido, 'Admin');
+    
+    // Configura o botão de fechar pro admin
+    const closeBtn = document.getElementById('close-chat-admin');
+    closeBtn.onclick = function() {
+        modal.style.display = 'none';
+        document.getElementById('container-chat-admin').innerHTML = '';
+    };
 }
 
 // ========== LÓGICA DO MOTORISTA (motorista.html) ==========
@@ -391,15 +549,34 @@ function carregarMotorista() {
 
             div.innerHTML = `
                 <h3>Pedido de ${p.cliente}</h3>
+                <p><strong>Caminhão/Entregador:</strong> ${p.caminhao || 'Não Informado'}</p>
                 <p><strong>Produto:</strong> ${p.quantidade}x ${p.produto}</p>
                 <p><strong>Endereço:</strong> ${p.endereco}</p>
+                
+                <div class="chat-box" style="margin-bottom: 15px;">
+                    <div style="background: #e67e22; color: white; padding: 10px; border-top-left-radius: 5px; border-top-right-radius: 5px; font-weight: bold; font-size: 14px;">
+                        💬 Chat com Cliente/Central
+                    </div>
+                    <div id="chat-box-${p.id}" class="chat-historico" style="height: 120px;"></div>
+                    <div class="chat-input-area" style="padding: 5px;">
+                        <input type="text" id="chat-input-${p.id}" placeholder="Mensagem..." style="font-size:12px;">
+                        <button onclick="enviarMensagemInput('${p.id}', 'Motorista')" style="color:white; padding: 5px 10px; font-size:12px; background-color:#d35400;">Enviar</button>
+                    </div>
+                </div>
+
                 <div class="acoes-motorista">
                     ${htmlMapaBotao}
                     <input type="text" id="codigo-${p.id}" placeholder="Cód. Confirmação (4 dig)" maxlength="4" style="width: 150px; display:inline-block; margin-bottom:0;">
                     <button onclick="confirmarEntrega('${p.id}')" style="background-color: #f39c12;">✅ Entregar</button>
+                    <button onclick="excluirPedido('${p.id}')" style="background-color: #e74c3c; margin-left: 10px;">🗑️ Excluir</button>
                 </div>
             `;
             listaMotorista.appendChild(div);
+            
+            // Renderiza o chat deste pedido em seguida
+            setTimeout(() => {
+                renderizarChat(p.id, 'Motorista');
+            }, 100);
         });
     }
 }
@@ -443,6 +620,24 @@ function confirmarEntrega(idPedido) {
     }
 }
 
+function excluirPedido(idPedido) {
+    if (!confirm("Tem certeza que deseja excluir este pedido? Esta ação não pode ser desfeita.")) return;
+
+    const index = pedidos.findIndex(p => p.id === idPedido);
+    if (index !== -1) {
+        const pedidoRemovido = pedidos[index];
+        pedidos.splice(index, 1);
+        localStorage.setItem('pedidos', JSON.stringify(pedidos));
+        
+        adicionarLog(`PEDIDO EXCLUÍDO 🗑️: O pedido de ${pedidoRemovido.cliente} foi removido pelo motorista.`);
+        alert("Pedido excluído com sucesso.");
+        
+        carregarMotorista();
+        // Se houver dashboard aberta, atualiza também
+        if (typeof carregarDashboard === 'function') carregarDashboard();
+    }
+}
+
 // Variável global para o mapa do cliente
 let mapCliente;
 
@@ -470,7 +665,11 @@ function rastrearPedidoCliente() {
             mensagemStatus = '<p>🚚 Seu pedido já saiu para entrega! O motorista está a caminho. Deixe o código em mãos para confirmar o recebimento.</p>';
         } else {
             // Preparando
-            mensagemStatus = '<p>👨‍🍳 Seu pedido está sendo preparado na cozinha e em breve será entregue ao motorista.</p>';
+            mensagemStatus = `<p>👨‍🍳 Seu pedido está sendo preparado na cozinha. <b>Prazo de preparo: ${pedido.tempoPreparo} min.</b></p>`;
+        }
+
+        if (pedido.status === 'Saiu para Entrega' && pedido.previsaoChegada) {
+            mensagemStatus += `<p style="background: #e1f5fe; padding: 10px; border-left: 5px solid #03a9f4; border-radius: 4px;">🕒 <b>Previsão de Chegada:</b> Aproximadamente às <b>${pedido.previsaoChegada}</b></p>`;
         }
 
         let htmlMapa = '';
@@ -478,16 +677,37 @@ function rastrearPedidoCliente() {
             htmlMapa = '<div id="map-cliente" style="height: 300px; width: 100%; margin-top: 15px; border-radius: 10px; z-index: 1;"></div>';
         }
 
+        // Adiciona a Interface de Chat para o Cliente
+        let htmlChat = `
+            <div class="chat-box">
+                <div style="background: #34495e; color: white; padding: 10px; border-top-left-radius: 5px; border-top-right-radius: 5px; font-weight: bold; font-size: 14px;">
+                    💬 Chat do Pedido
+                </div>
+                <div id="chat-box-${pedido.id}" class="chat-historico"></div>
+                <div class="chat-input-area">
+                    <input type="text" id="chat-input-${pedido.id}" placeholder="Digite sua mensagem...">
+                    <button onclick="enviarMensagemInput('${pedido.id}', 'Cliente')" style="color:white; padding: 5px 15px;">Enviar</button>
+                </div>
+            </div>
+        `;
+
         resultBox.innerHTML = `
             <div style="border: 1px solid #ddd; padding: 10px; margin-top: 10px; border-radius: 5px;">
                 <p><strong>Cliente:</strong> ${pedido.cliente}</p>
+                <p><strong>Caminhão/Motorista:</strong> ${pedido.caminhao || 'Não Informado'}</p>
                 <p><strong>Produto:</strong> ${pedido.produto}</p>
                 <p><strong>Endereço:</strong> ${pedido.endereco}</p>
                 <p><strong>Status:</strong> <span style="color: ${cor}; font-weight:bold; font-size:18px;">${pedido.status}</span></p>
                 ${mensagemStatus}
+                ${htmlChat}
                 ${htmlMapa}
             </div>
         `;
+
+        // Renderiza as mensagens logo após inserir no DOM
+        setTimeout(() => {
+            renderizarChat(pedido.id, 'Cliente');
+        }, 100);
 
         // Renderiza o mapa do cliente se tiver coordenadas
         if (pedido.lat && pedido.lng) {
@@ -551,4 +771,150 @@ function rastrearPedidoCliente() {
     } else {
         resultBox.innerHTML = "<p style='color:red;'>Código não encontrado.</p>";
     }
+}
+
+// ========== LÓGICA DO CLIENTE (HISTÓRICO) ==========
+function verHistoricoCliente() {
+    const nomeInput = document.getElementById('nome-historico').value.trim().toLowerCase();
+    const resultBox = document.getElementById('resultado-historico');
+
+    if (!nomeInput) {
+        resultBox.innerHTML = "<p style='color:red;'>Por favor, digite seu nome para buscar.</p>";
+        return;
+    }
+
+    // Busca todos os pedidos onde o nome do cliente inclui o texto digitado
+    const historico = pedidos.filter(p => p.cliente && p.cliente.toLowerCase().includes(nomeInput));
+
+    if (historico.length > 0) {
+        // Ordena os pedidos para os mais recentes (pelo ID) ficarem no topo da lista
+        historico.sort((a, b) => b.id - a.id);
+
+        let html = '';
+        
+        let totalGasto = 0;
+        let totalPedidos = historico.length;
+        
+        historico.forEach(pedido => {
+            let corStatus = 'orange';
+            if (pedido.status === 'Entregue') corStatus = 'green';
+            else if (pedido.status === 'Saiu para Entrega') corStatus = '#3498db';
+
+            // Formata a data (se foi gravada no novo formato a partir de hoje)
+            let dataFormatada = 'Data Desconhecida';
+            if (pedido.data) {
+                dataFormatada = pedido.data.split('-').reverse().join('/');
+            }
+
+            const valorExibir = pedido.valor || 0;
+            totalGasto += valorExibir;
+
+            html += `
+                <div style="border: 1px solid #ddd; padding: 10px; margin-top: 10px; border-radius: 5px; background: #fafafa; position: relative;">
+                    <span style="position: absolute; top: 10px; right: 10px; font-size: 12px; color: #7f8c8d;">Cód: ${pedido.codigoSecreto || 'N/A'}</span>
+                    <p style="margin: 0 0 5px 0; color: #7f8c8d; font-size: 14px;">📅 ${dataFormatada}</p>
+                    <p style="margin: 0 0 5px 0;"><strong>Produto:</strong> ${pedido.quantidade}x ${pedido.produto}</p>
+                    <p style="margin: 0 0 5px 0;"><strong>Valor:</strong> R$ ${valorExibir.toFixed(2)}</p>
+                    <p style="margin: 0;"><strong>Status:</strong> <span style="color: ${corStatus}; font-weight:bold;">${pedido.status}</span></p>
+                </div>
+            `;
+        });
+        
+        // Adiciona um sumario no topo
+        resultBox.innerHTML = `
+            <div style="background-color: #f8f9fa; padding: 10px; border-radius: 5px; text-align: center; border: 1px solid #e9ecef; margin-bottom: 15px;">
+                <p style="margin: 0;"><strong>Você já fez ${totalPedidos} pedido(s) conosco!</strong></p>
+                <p style="margin: 5px 0 0 0; color: #27ae60;"><strong>Total Gasto: R$ ${totalGasto.toFixed(2)}</strong></p>
+            </div>
+            ${html}
+        `;
+    } else {
+        resultBox.innerHTML = "<p style='color:#7f8c8d;'>Nenhuma compra encontrada para este nome. Verifique se digitou exatamente como fez o pedido.</p>";
+    }
+}
+
+// ========== SISTEMA DE CHAT ==========
+function adicionarMensagem(idPedido, remetente, mensagem) {
+    // Encontra o pedido
+    const index = pedidos.findIndex(p => p.id === idPedido);
+    if (index === -1) return;
+
+    // Se o pedido não tiver o array de mensagens, cria
+    if (!pedidos[index].mensagens) {
+        pedidos[index].mensagens = [];
+    }
+
+    const agora = new Date();
+    const hora = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+    pedidos[index].mensagens.push({
+        remetente: remetente, // 'Cliente', 'Admin' ou 'Motorista'
+        texto: mensagem,
+        hora: hora
+    });
+
+    localStorage.setItem('pedidos', JSON.stringify(pedidos));
+    
+    // Atualiza a interface do chat que estiver aberta
+    renderizarChat(idPedido, remetente); // passa o remetente atual pra saber como renderizar os balões
+}
+
+function renderizarChat(idPedido, visualizador) {
+    const pedido = pedidos.find(p => p.id === idPedido);
+    if (!pedido) return;
+
+    const chatContainer = document.getElementById(`chat-box-${idPedido}`);
+    if (!chatContainer) return; // a janela de chat não está aberta na tela atual
+
+    let html = '';
+    const mensagens = pedido.mensagens || [];
+
+    if (mensagens.length === 0) {
+        html = '<p style="text-align:center; color:#999; font-size:12px; margin-top:50px;">Nenhuma mensagem ainda. Inicie a conversa!</p>';
+    } else {
+        mensagens.forEach(msg => {
+            // Define de que lado ou de que cor fica o balão
+            let classeBalao = 'mensagem ';
+            let nomeExibicao = msg.remetente;
+
+            if (msg.remetente === visualizador) {
+                // Mensagem minha (fica na direita, cor especifica)
+                if (visualizador === 'Cliente') classeBalao += 'msg-cliente';
+                else if (visualizador === 'Admin') classeBalao += 'msg-admin';
+                else classeBalao += 'msg-motorista'; 
+                
+                classeBalao += '" style="align-self: flex-end; text-align: right; background: #e8f8f5;';
+                nomeExibicao = 'Você';
+            } else {
+                // Mensagem do outro (fica na esquerda, cor neutra)
+                classeBalao += '" style="align-self: flex-start; text-align: left; background: #eaeded;';
+            }
+
+            html += `
+                <div class="${classeBalao}">
+                    <strong>${nomeExibicao}</strong>
+                    <div style="margin-top:3px;">${msg.texto}</div>
+                    <span class="msg-info">${msg.hora}</span>
+                </div>
+            `;
+        });
+    }
+
+    chatContainer.innerHTML = html;
+    
+    // Rola para a última mensagem
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+function enviarMensagemInput(idPedido, remetente) {
+    const inputEl = document.getElementById(`chat-input-${idPedido}`);
+    if (!inputEl) return;
+
+    const texto = inputEl.value.trim();
+    if (!texto) return;
+
+    adicionarMensagem(idPedido, remetente, texto);
+    
+    // Limpa o input
+    inputEl.value = '';
 }
