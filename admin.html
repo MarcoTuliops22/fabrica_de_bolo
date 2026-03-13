@@ -28,6 +28,12 @@
             });
         }
     </script>
+    <script>
+        // Verificação de Autenticação: Abre o login se não for administrador
+        if (sessionStorage.getItem("adminAuth") !== "true") {
+            window.location.href = "index.html";
+        }
+    </script>
 </head>
 
 <body>

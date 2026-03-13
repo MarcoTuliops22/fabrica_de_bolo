@@ -100,7 +100,7 @@ function fazerLogin() {
         } else if (user.tipo === 'cliente') {
             sessionStorage.setItem("clienteAuth", "true");
             sessionStorage.setItem("nomeClienteLogado", user.usuario);
-            window.location.href = "index.html"; // Tela de Cliente/Geral
+            window.location.href = "home.html"; // Tela de Cliente/Geral
         }
     } else {
         alert("Usuário ou senha incorretos!");
@@ -112,7 +112,7 @@ function sairSistema() {
     sessionStorage.removeItem("motoAuth");
     sessionStorage.removeItem("clienteAuth");
     sessionStorage.removeItem("nomeClienteLogado");
-    window.location.href = "login.html";
+    window.location.href = "index.html";
 }
 
 // ========== LÓGICA DO INDEX.HTML ==========

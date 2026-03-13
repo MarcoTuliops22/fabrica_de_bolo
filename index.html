@@ -2,132 +2,149 @@
 <html lang="pt-br">
 
 <head>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema Inteligente de Logística</title>
-
+    <title>Acesso Restrito - Logística</title>
     <link rel="stylesheet" href="style.css">
-
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#3498db">
-    <link rel="apple-touch-icon" href="icon-192x192.png">
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(reg => console.log('ServiceWorker registrado:', reg.scope))
-                    .catch(err => console.log('Falha no registro do ServiceWorker:', err));
-            });
-        }
-    </script>
 </head>
-<body>
-    <!-- Botões visíveis padrão para todos (Deslogados) -->
-    <div id="nav-padrao" style="display:flex; justify-content:flex-end; gap: 10px; margin-bottom: 20px;">
-        <button onclick="window.location.href='login.html'" style="background-color: #34495e; padding: 5px 15px;">👤 Fazer Login</button>
+
+<body class="bg-login">
+    <header>
+        <h1>ILKA MARTINELLI</h1>
+        <p>Logística Inteligente</p>
+    </header>
+
+    <section class="formulario" style="max-width: 400px; margin: 0 auto; text-align: center;">
+        
+        <!-- DIV DE LOGIN -->
+        <div id="box-login">
+            <h2 id="titulo-login">Faça seu Login</h2>
+            <input type="text" id="usuario-login" placeholder="Nome de Usuário">
+            <div style="position: relative;">
+                <input type="password" id="senha-login" placeholder="Senha" style="width: 100%; box-sizing: border-box; padding-right: 40px;">
+                <span onclick="mostrarOcultarSenha('senha-login', 'olho-login')" id="olho-login" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 18px;">👁️</span>
+            </div>
+            <button onclick="fazerLogin()" style="width: 100%; margin-top: 15px; background-color: #34495e;">Entrar no Sistema</button>
+            <p style="margin-top: 15px; font-size: 14px;">Não possui conta? <a href="#" onclick="alternarTela('cadastro')" style="color: #3498db; text-decoration: none; font-weight:bold;">Cadastre-se</a></p>
+        </div>
+
+        <!-- DIV DE CADASTRO (Oculta por padrão) -->
+        <div id="box-cadastro" style="display:none;">
+            <h2>Criar Conta</h2>
+            <input type="text" id="usuario-cad" placeholder="Escolha um Usuário/Nome">
+            <div style="position: relative; margin-bottom: 5px;">
+                <input type="password" id="senha-cad" placeholder="Crie uma Senha" style="width: 100%; box-sizing: border-box; padding-right: 40px; margin-bottom:0px;">
+                <span onclick="mostrarOcultarSenha('senha-cad', 'olho-cad')" id="olho-cad" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 18px;">👁️</span>
+            </div>
+            <p style="text-align:left; margin-bottom:5px; font-size:14px;">Que tipo de conta deseja criar?</p>
+            <select id="tipo-cad" style="width: 100%; margin-bottom: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                <option value="cliente">Cliente (Fazer/Acompanhar Pedidos)</option>
+                <option value="motorista">Motorista (Fazer Entregas)</option>
+                <option value="admin">Administrador (Gerenciar Sistema)</option>
+            </select>
+            <button onclick="cadastrarUsuario()" style="width: 100%; margin-top: 15px; background-color: #27ae60;">Finalizar Cadastro</button>
+            <p style="margin-top: 15px; font-size: 14px;">Já tem uma conta? <a href="#" onclick="alternarTela('login')" style="color: #3498db; text-decoration: none; font-weight:bold;">Faça Login</a></p>
+        </div>
+
+    </section>
+
+    <!-- Área de Download/Instalação do Aplicativo -->
+    <div class="secao-download">
+        <div id="container-instalar" style="display:none;">
+            <div class="download-card">
+                <div class="download-info">
+                    <span class="download-icon">📲</span>
+                    <div>
+                        <strong>Versão Mobile Disponível</strong>
+                        <p>Baixe o aplicativo para acesso rápido e offline</p>
+                    </div>
+                </div>
+                <button id="btn-instalar" class="btn-premium-download">
+                    BAIXAR APP (APK)
+                </button>
+            </div>
+        </div>
+        
+        <p id="msg-instalar-manual" style="font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 20px;">
+            Para "baixar" manualmente: Clique nos 3 pontos ⋮ do navegador e selecione <b>"Instalar Aplicativo"</b> ou <b>"Adicionar à tela de início"</b>.
+        </p>
     </div>
 
-    <!-- Container do Admin e Logout (Escondidos por padrão) -->
-    <div id="nav-logado" style="display:none; justify-content:space-between; gap: 10px; margin-bottom: 20px;">
-        <button id="btn-admin" onclick="window.location.href='admin.html'" style="display:none; flex:1;">🔐 Painel Admin</button>
-        <button id="btn-moto" onclick="window.location.href='motorista.html'" style="display:none; background-color: #f39c12; flex:1;">🚚 Painel Motorista</button>
-        <button onclick="sairSistema()" style="background-color: #e74c3c; flex:1;">🚪 Sair</button>
-    </div>
-
+    <script src="script.js"></script>
     <script>
-        // Ocultar botão de login apenas se estiver autenticado com algum cargo
-        const estaAutenticado = sessionStorage.getItem("adminAuth") === "true" || 
-                                sessionStorage.getItem("motoAuth") === "true" || 
-                                sessionStorage.getItem("clienteAuth") === "true";
-
-        if (estaAutenticado) {
-            document.getElementById('nav-padrao').style.display = 'none';
-            document.getElementById('nav-logado').style.display = 'flex';
+        function alternarTela(tela) {
+            if (tela === 'cadastro') {
+                document.getElementById('box-login').style.display = 'none';
+                document.getElementById('box-cadastro').style.display = 'block';
+            } else {
+                document.getElementById('box-cadastro').style.display = 'none';
+                document.getElementById('box-login').style.display = 'block';
+            }
+        }
+        
+        function mostrarOcultarSenha(idInput, idOlho) {
+            const input = document.getElementById(idInput);
+            const olho = document.getElementById(idOlho);
             
-            // Controle específico: Quem vê quais botões?
-            if (sessionStorage.getItem("adminAuth") === "true") {
-                // Admin vê tanto seu painel quanto do motorista
-                document.getElementById('btn-admin').style.display = 'block';
-                document.getElementById('btn-moto').style.display = 'block';
-            } else if (sessionStorage.getItem("motoAuth") === "true") {
-                // Motorista vê apenas o seu painel
-                document.getElementById('btn-moto').style.display = 'block';
-            } 
-            // Cliente autenticado cai aqui e vê apenas o botão de SAIR, 
-            // já que os botões btn-admin e btn-moto continuam com display:none.
+            if (input.type === 'password') {
+                input.type = 'text';
+                olho.innerText = '🙈'; // Olho fechado
+            } else {
+                input.type = 'password';
+                olho.innerText = '👁️'; // Olho aberto
+            }
+        }
+        
+        // Permite logar com a tecla Enter
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                if(document.getElementById('box-login').style.display !== 'none') fazerLogin();
+                else cadastrarUsuario();
+            }
+        });
+        
+        // Verifica se já existe um Administrador ao carregar o Cadastro
+        window.addEventListener('load', function() {
+            // Arrays usuarios vem do script.js
+            if (typeof usuarios !== 'undefined') {
+                const temAdmin = usuarios.some(u => u.tipo === 'admin');
+                if (temAdmin) {
+                    const selectTipo = document.getElementById('tipo-cad');
+                    // Remove a option de admin se já existir no sistema
+                    for (let i = 0; i < selectTipo.options.length; i++) {
+                        if (selectTipo.options[i].value === 'admin') {
+                            selectTipo.remove(i);
+                            break;
+                        }
+                    }
+                }
+            }
+        });
+        // Instalação PWA
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('container-instalar').style.display = 'block';
+        });
+
+        document.getElementById('btn-instalar').addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                document.getElementById('container-instalar').style.display = 'none';
+            }
+            deferredPrompt = null;
+        });
+        
+        // Registrar Service Worker para funcionar offline
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(() => {});
         }
     </script>
-
-<header>
-    <h1>🥖 Sistema Inteligente de Logística</h1>
-    <p>Controle de pedidos, produção e entregas</p>
-</header>
-
-<section class="formulario">
-
-    <h2>Registrar Pedido</h2>
-
-    <input id="cliente" placeholder="Cliente">
-
-    <input id="produto" placeholder="Produto" oninput="calcularValorPedido()">
-
-    <div class="produtos">
-        <p>Selecionar Produto:</p>
-
-        <button onclick="selecionarProduto('Pão Francês')">Pão Francês</button>
-        <button onclick="selecionarProduto('Pão Doce')">Pão Doce</button>
-        <button onclick="selecionarProduto('Pão de Forma')">Pão de Forma</button>
-        <button onclick="selecionarProduto('Bolo')">Bolo</button>
-
-    </div>
-
-    <input id="quantidade" type="number" placeholder="Quantidade" minimum="1" oninput="calcularValorPedido()">
-
-    <input id="caminhao" placeholder="Caminhão/Motorista (Nome ou Num)">
-
-    <input id="custo" type="number" placeholder="Custo entrega">
-
-    <input id="valor" type="number" placeholder="Valor venda">
-
-    <!-- CEP com busca automática via ViaCEP -->
-    <div style="display:flex; gap:8px; align-items:center;">
-        <input id="cep" type="text" placeholder="CEP (somente números)" maxlength="9" style="flex:1;" oninput="formatarCEP(this)">
-        <button type="button" onclick="buscarCEP()" style="padding:10px 14px; margin:0; background:#3498db;">🔍</button>
-    </div>
-    <input id="endereco" placeholder="Endereço completo (preenchido pelo CEP)" style="background:#f0f4f8; color:#555;" readonly>
-    <input id="numero-end" placeholder="Número / Complemento (Ex: 42, Apto 3)">
-
-    <button onclick="registrarPedido()">Registrar</button>
-    <p id="codigo-gerado-display" style="text-align:center; color:#27ae60; margin-top:10px;"></p>
-
-</section>
-
-<!-- SEÇÃO DO CLIENTE PARA ACOMPANHAR O PEDIDO -->
-<section class="formulario" style="margin-top: 20px;">
-    <h2>🔍 Acompanhar Meu Pedido</h2>
-    <p>Digite o código de 4 dígitos que você recebeu para rastrear a entrega.</p>
-    <input id="codigo-rastreio" placeholder="Ex: 1234" maxlength="4">
-    <button onclick="rastrearPedidoCliente()" style="background-color: #3498db;">Rastrear</button>
-    <div id="resultado-rastreio"></div>
-</section>
-
-<!-- SEÇÃO DO CLIENTE PARA HISTÓRICO DE COMPRAS -->
-<section class="formulario" style="margin-top: 20px;">
-    <h2>📜 Meu Histórico de Compras</h2>
-    <p>Digite seu nome (como foi registrado no pedido) para ver todas as suas compras.</p>
-    <div style="display:flex; gap:10px; margin-top:10px;">
-        <input id="nome-historico" placeholder="Seu Nome" style="margin: 0;">
-        <button onclick="verHistoricoCliente()" style="background-color: #9b59b6; margin: 0;">Ver Histórico</button>
-    </div>
-    <div id="resultado-historico" style="margin-top: 15px;"></div>
-</section>
-
-<script src="script.js"></script>
-
 </body>
 
 </html>

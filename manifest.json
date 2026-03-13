@@ -1,7 +1,7 @@
 {
   "name": "ILKA APP - Logística Martinelli",
   "short_name": "ILKA APP",
-  "start_url": "./login.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#1a1a1a",
   "theme_color": "#c9a227",
